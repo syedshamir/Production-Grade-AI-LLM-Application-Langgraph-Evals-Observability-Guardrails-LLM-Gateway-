@@ -15,6 +15,7 @@ nest-asyncio                # Support for nested async loops in notebooks/stream
 # --- GEMINI EMBEDDINGS ---
 google-generativeai         # Gemini API — embeddings (text-embedding-004 / gemini-embedding-001)
 langchain-google-genai      # LangChain integration for Gemini models
+sentence-transformers       # Local fallback embeddings if google gemini is not available (used by FlashRank reranker internally)
 
 # --- VECTOR DB & RETRIEVAL ---
 qdrant-client               # Vector Database for semantic search
