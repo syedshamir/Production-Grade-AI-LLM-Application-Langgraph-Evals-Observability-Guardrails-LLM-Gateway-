@@ -3,8 +3,11 @@ import logfire
 
 def chunk_text(text: str, chunk_size: int = 1500) -> List[str]:
     """
-    Simple semantic-ish chunker that splits by paragraphs.
-    Ensures chunks do not exceed the specified size.
+    Split raw document text into retrieval-friendly chunks.
+
+    Paragraph boundaries are preserved where possible because they usually carry
+    more semantic meaning than fixed-width slicing. This keeps related ideas
+    together for embeddings while still enforcing an approximate upper size.
     """
     with logfire.span("✂️ Text Chunking", text_length=len(text)):
         if not text.strip(): 
@@ -15,6 +18,8 @@ def chunk_text(text: str, chunk_size: int = 1500) -> List[str]:
         current_chunk = ""
         
         for p in paragraphs:
+            # Keep appending paragraphs until the next one would exceed the
+            # target size, then flush the accumulated context as one chunk.
             if len(current_chunk) + len(p) < chunk_size:
                 current_chunk += p + "\n\n"
             else:
@@ -25,6 +30,7 @@ def chunk_text(text: str, chunk_size: int = 1500) -> List[str]:
         if current_chunk.strip():
             chunks.append(current_chunk.strip())
             
+        # Guard against whitespace-only chunks caused by noisy source files.
         valid_chunks = [c for c in chunks if c.strip()]
         logfire.info(f"✅ Generated {len(valid_chunks)} chunks")
         return valid_chunks

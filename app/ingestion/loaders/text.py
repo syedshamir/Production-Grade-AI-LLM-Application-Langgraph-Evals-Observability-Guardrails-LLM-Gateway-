@@ -2,7 +2,10 @@ import logfire
 
 def parse_text(file_path: str):
     """
-    Parses plain text files.
+    Read plain text files into the same string interface used by richer loaders.
+
+    Encoding errors are ignored so a single bad byte in noisy source data does
+    not prevent the rest of the file from being indexed.
     """
     with logfire.span("📄 Text Parsing", filename=file_path):
         try:

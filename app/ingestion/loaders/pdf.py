@@ -5,7 +5,10 @@ from pypdf import PdfReader
 def parse_pdf(file_path: str) -> str:
     """
     Extract text from a PDF locally using pypdf.
-    Falls back to pdfplumber for pages that yield no text (e.g. image-heavy pages).
+
+    pypdf is fast for text-layer PDFs. pdfplumber is attempted only for pages
+    pypdf reports as blank, which gives better coverage without paying the
+    fallback cost for every page.
     """
     with logfire.span("PDF Parsing (local)", filename=file_path):
         try:
@@ -21,9 +24,11 @@ def parse_pdf(file_path: str) -> str:
                 if text.strip():
                     text_parts.append(text)
                 else:
+                    # Track 1-based page numbers because that is what users see
+                    # in PDF viewers and logs.
                     blank_pages.append(i + 1)
 
-            # Fallback: use pdfplumber for any pages pypdf returned blank
+            # Retry only the blank pages; image-only pages may still produce no text.
             if blank_pages:
                 logfire.info(f"pypdf returned blank on pages {blank_pages} — retrying with pdfplumber.")
                 try:

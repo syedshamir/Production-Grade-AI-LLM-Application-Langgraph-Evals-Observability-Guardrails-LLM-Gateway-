@@ -4,11 +4,13 @@ from unstructured.partition.auto import partition
 def parse_office(file_path: str):
     """
     Parses Office documents (.docx, .pptx) using the Unstructured library.
-    Unlike PDFs, these formats are structured and lightweight, so they are processed locally.
+
+    Unlike PDFs, Office formats usually expose structured text, tables, and
+    slide content directly, so they can be processed locally without OCR.
     """
     with logfire.span("📄 Office Document Parsing", filename=file_path):
         try:
-            # Unstructured automatically detects if it's docx or pptx
+            # Unstructured auto-detects the concrete Office format from the file.
             elements = partition(filename=file_path)
             full_text = "\n".join([str(el) for el in elements])
             

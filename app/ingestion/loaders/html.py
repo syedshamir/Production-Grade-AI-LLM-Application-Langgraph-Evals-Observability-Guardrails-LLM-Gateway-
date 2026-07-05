@@ -3,8 +3,10 @@ import logfire
 
 def parse_html(file_path: str):
     """
-    Parses HTML content using BeautifulSoup.
-    Cleans scripts, styles, and extracts readable text for RAG.
+    Parse HTML into readable plain text for retrieval.
+
+    Non-content tags are removed before text extraction so navigation scripts,
+    styling, and metadata do not pollute embeddings or downstream answers.
     """
     with logfire.span("📄 HTML Parsing", filename=file_path):
         try:
@@ -13,14 +15,14 @@ def parse_html(file_path: str):
             
             soup = BeautifulSoup(content, "html.parser")
             
-            # 1. Remove Junk (Scripts, Styles, Metadata)
+            # Remove content that is useful to browsers but noisy for RAG.
             for script in soup(["script", "style", "meta", "noscript"]):
                 script.decompose()
                 
-            # 2. Extract Text
+            # Preserve visible block boundaries by separating extracted text with newlines.
             text = soup.get_text(separator="\n")
             
-            # 3. Clean Whitespace (Collapse multiple newlines)
+            # Collapse repeated whitespace while keeping one logical line per phrase.
             lines = (line.strip() for line in text.splitlines())
             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
             text_clean = '\n'.join(chunk for chunk in chunks if chunk)
