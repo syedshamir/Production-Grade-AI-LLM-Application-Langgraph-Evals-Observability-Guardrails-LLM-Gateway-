@@ -7,6 +7,8 @@ BATCH_SIZE = 50
 _GEMINI_DIM = 3072
 _FALLBACK_DIM = 768  # all-mpnet-base-v2
 
+# The active embedding backend is initialized lazily so importing this module
+# does not immediately make network calls or load a large local model.
 _active_model = None
 _model_type: str | None = None  # "gemini" or "fallback"
 
@@ -14,7 +16,7 @@ _model_type: str | None = None  # "gemini" or "fallback"
 # ── Model initialisation ───────────────────────────────────────────────────────
 
 def _probe_gemini():
-    """Try one embed call to verify Gemini is reachable. Returns model or None."""
+    """Try one embed call to verify Gemini credentials and network reachability."""
     try:
         model = GoogleGenerativeAIEmbeddings(
             model="models/gemini-embedding-2-preview",
@@ -29,13 +31,14 @@ def _probe_gemini():
 
 
 def _load_fallback():
+    """Load the local sentence-transformers model used when Gemini is unavailable."""
     from sentence_transformers import SentenceTransformer
     logfire.info("Loading sentence-transformers fallback (all-mpnet-base-v2, 768-dim).")
     return SentenceTransformer("all-mpnet-base-v2")
 
 
 def _init():
-    """Initialise embedding model once per process. Called lazily on first use."""
+    """Initialize the embedding model once per process, on first use."""
     global _active_model, _model_type
     if _active_model is not None:
         return
@@ -61,6 +64,7 @@ def get_embedding_dim() -> int:
 
 def _embed_batch(batch: list[str]) -> list[list[float]]: # list of embeddings or numberical representation of the text
     if _model_type == "gemini":
+        # Retry transient quota/rate-limit responses with exponential backoff.
         # Exponential backoff: 1 s → 2 s → 4 s → 8 s (4 attempts total)
         for attempt in range(4):
             try:
@@ -80,12 +84,15 @@ def _embed_batch(batch: list[str]) -> list[list[float]]: # list of embeddings or
                     raise
         raise RuntimeError("Gemini rate limit persisted after 4 attempts.")
     else:
+        # sentence-transformers returns numpy arrays; convert to lists for APIs
+        # that expect JSON-serializable vectors.
         return _active_model.encode(batch, show_progress_bar=False).tolist()
 
 
 # ── Public API (same signatures as before) ─────────────────────────────────────
 
 def embed_query(query: str) -> list[float]:
+    """Embed a single user query using the active backend."""
     _init()
     if _model_type == "gemini":
         return _active_model.embed_query(query)
@@ -93,6 +100,7 @@ def embed_query(query: str) -> list[float]:
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
+    """Embed documents in bounded batches to avoid large provider requests."""
     _init()
     all_embeddings: list[list[float]] = []
     for i in range(0, len(texts), BATCH_SIZE):
