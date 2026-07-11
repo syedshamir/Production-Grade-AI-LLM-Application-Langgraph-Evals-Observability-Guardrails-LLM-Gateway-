@@ -16,7 +16,7 @@ class Settings:
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
     QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME")
     QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY")
-    QDRANT_CLUSTER_ENDPOINT: str = os.getenv("QDRANT_CLUSTER_ENDPOINT")
+    QDRANT_URL: str = os.getenv("QDRANT_CLUSTER_ENDPOINT")
 
 # Import this singleton wherever configuration is needed so environment loading
 # stays consistent across ingestion, retrieval, and future app entry points.
