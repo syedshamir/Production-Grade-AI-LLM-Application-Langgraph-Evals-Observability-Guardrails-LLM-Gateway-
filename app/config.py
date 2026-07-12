@@ -14,7 +14,7 @@ class Settings:
     GROQ_MODEL = "llamma-3.3-70b-versatile"  # or "gpt-4o" for the full version
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY")
-    QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME")
+    QDRANT_COLLECTION: str = os.getenv("QDRANT_COLLECTION_NAME")
     QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY")
     QDRANT_URL: str = os.getenv("QDRANT_CLUSTER_ENDPOINT")
 
