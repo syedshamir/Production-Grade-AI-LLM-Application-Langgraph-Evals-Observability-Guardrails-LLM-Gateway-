@@ -5,7 +5,7 @@ import operator
 class AgentState(TypedDict):
     # Using Annotated with operator.add ensures that messages 
     # are appended to the history rather than replaced.
-    messages: Annotated[List[dict], operator.add]
+    messages: Annotated[List[dict], operator.add] #4 messages, AI HUMAN TOOL SYSTEM
     current_query: str
     documents: List[str]
     plan: List[str]
